@@ -399,16 +399,41 @@ class MainScreenState extends State<MainScreen> {
     ]..sort(
         (final a, final b) => a.start.compareTo(b.start),
       );
+    final now = DateTime.now();
+    final onNow = <FestivalEvent>[];
+    for (final event in events) {
+      final afterEvents = events
+          .where(
+            (final element) =>
+                element.stage == event.stage &&
+                element.start.isAfter(event.start),
+          )
+          .toList();
+      final nextEvent = afterEvents.isEmpty ? null : afterEvents.first;
+      if (event.start.day == now.day) {
+        if (event.start.isBefore(now) &&
+            (nextEvent == null || nextEvent.start.isAfter(now))) {
+          onNow.add(event);
+        }
+      }
+    }
     return TabbedScaffold(
-      tabs: FestivalStage.values.map<TabbedScaffoldTab>((final e) {
-        final stageEvents =
-            events.where((final element) => element.stage == e).toList();
-        return TabbedScaffoldTab(
-          title: getStageName(e),
-          icon: Text(stageEvents.length.toString()),
-          builder: (final context) => getEventsListView(stageEvents),
-        );
-      }).toList(),
+      tabs: [
+        TabbedScaffoldTab(
+          title: 'On Now',
+          icon: Text('${onNow.length}'),
+          builder: (final context) => getEventsListView(onNow),
+        ),
+        ...FestivalStage.values.map<TabbedScaffoldTab>((final e) {
+          final stageEvents =
+              events.where((final element) => element.stage == e).toList();
+          return TabbedScaffoldTab(
+            title: getStageName(e),
+            icon: Text(stageEvents.length.toString()),
+            builder: (final context) => getEventsListView(stageEvents),
+          );
+        })
+      ],
     );
   }
 
